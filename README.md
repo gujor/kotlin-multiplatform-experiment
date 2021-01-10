@@ -73,8 +73,6 @@ Kotlin generics are translated to the less powerful Objective-C [lightweight](ht
 
 Also, the [Nothing](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing.html) type above, which represents something that can't be instantiated (like Swift's [Never](https://developer.apple.com/documentation/swift/never)), is lost in the translation from Kotlin to Objective-C, and is an another example of something that needs to be taken care of in the "swiftify" layer.
 
-**The amount of work involved in keeping this mapping layer up to date with changes in the shared framework will be crucial for the success of KMM.**
-
 To transform the shared `Result<T>` class to `Swift.Result<T, KotlinThrowable>` this extension can be used:
 
 ```
@@ -113,6 +111,8 @@ The Swift code for this can be found in [ContentView.swift](iosApp/iosApp/Conten
 ### Conclusion
 
 Using `sealed class` in the Kotlin business layer, exposing them as Objective-C generics and manually mapping them to Swift seems doable.
+
+**The amount of work involved in keeping this mapping layer up to date with changes in the shared framework will be crucial for the success of KMM.**
 
 ## Misc Links
 
