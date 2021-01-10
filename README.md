@@ -12,6 +12,7 @@ This test of KMM is not even scratching the surface at this point and consist on
 
 - It's Kotlin to Objective-C, not Kotlin to Swift (no structs or enums).
 - A additional mapping layer between the shared Objective-C framework and idiomatic Swift is needed.
+- A lot of information is lost when exposing a shared `sealed class` to iOS, but manually transforming it to Swift seems feasible.
 - Since the shared framework is written in Kotlin, KMM should't have a negative impact on Android development.
 - Android and iOS developers unified by working together on shared framework seems advantageous.
 - It's a young technology with a lack of examples and tutorials on the internet.
