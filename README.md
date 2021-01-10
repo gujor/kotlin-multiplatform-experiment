@@ -11,12 +11,12 @@ This test of KMM is not even scratching the surface at this point and consist on
 ### Summary
 
 - It's Kotlin to Objective-C, not Kotlin to Swift (no structs or enums).
-- A additional mapping layer between the shared Objective-C framework and idiomatic Swift is needed.
+- An additional mapping layer between the shared Objective-C framework and idiomatic Swift is needed.
 - A lot of information is lost when exposing a shared `sealed class` to iOS, but manually transforming it to Swift seems feasible.
 - Since the shared framework is written in Kotlin, KMM should't have a negative impact on Android development.
 - Android and iOS developers unified by working together on shared framework seems advantageous.
 - It's a young technology with a lack of examples and tutorials on the internet.
-- It's used by by [Netflix](https://netflixtechblog.com/netflix-android-and-ios-studio-apps-kotlin-multiplatform-d6d4d8d25d23) and some more [companies](https://kotlinlang.org/lp/mobile/case-studies/).
+- It's used by by [Netflix](https://netflixtechblog.com/netflix-android-and-ios-studio-apps-kotlin-multiplatform-d6d4d8d25d23) and some other [companies](https://kotlinlang.org/lp/mobile/case-studies/).
 
 ## Setup
 
@@ -44,7 +44,7 @@ public enum Result<Success, Failure: Error> {
 }
 ```
 
-Kotlin has a [Result](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/#result) type also, but it's [limited](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md#limitations) and can't be used as a return type. As an alternative, a shared result type can be constructed using Kotlin's [sealed classes](...):
+Kotlin has a [Result](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/#result) type also, but it's [limited](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md#limitations) and can't be used as a return type. As an alternative, a shared result type can be constructed using Kotlin's [sealed classes](https://kotlinlang.org/docs/reference/sealed-classes.html):
 
 ```
 sealed class Result<T> {
@@ -71,13 +71,13 @@ public class ResultSuccess<T> : Result<T> where T : AnyObject {
 }
 ```
 
-Kotlin generics are translated to the less powerful Objective-C [lightweight](https://developer.apple.com/documentation/swift/imported_c_and_objective-c_apis/using_imported_lightweight_generics_in_swift) generics. To keep the Swift codebase nice and ergonomic we need to introduce a mapping layer that converts the shared Objective-C framework to idiomatic Swift.
+Kotlin generics are translated to the less powerful Objective-C [lightweight](https://developer.apple.com/documentation/swift/imported_c_and_objective-c_apis/using_imported_lightweight_generics_in_swift) generics. To keep the Swift codebase nice and ergonomic we need to introduce a mapping layer that converts the shared Objective-C framework to idiomatic Swift, and in this case, transform the `Result<T>` class to a `Swift.Result<T, Error>` type.
 
-Also, the [Nothing](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing.html) type above, which represents something that can't be instantiated (like Swift's [Never](https://developer.apple.com/documentation/swift/never)), is lost in the translation from Kotlin to Objective-C, and is an another example of something that need to be taken care of in the "swiftify" layer.
+Also, the [Nothing](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing.html) type above, which represents something that can't be instantiated (like Swift's [Never](https://developer.apple.com/documentation/swift/never)), is lost in the translation from Kotlin to Objective-C, and is an another example of something that needs to be taken care of in the "swiftify" layer.
 
 The amount of work involved in keeping this mapping layer up to date with changes in the shared framework will be crucial for the success of KMM.
 
-To convert the shared `Result<T>` class to `Swift.Result<T, KotlinThrowable>` this extension can be used:
+To transform the shared `Result<T>` class to `Swift.Result<T, KotlinThrowable>` this extension can be used:
 
 ```
 extension Swift.Result
@@ -94,6 +94,8 @@ where Success: AnyObject, Failure == KotlinThrowable
     }
   }
 }
+
+extension KotlinThrowable: Error {}
 ```
 
 The Objective-C lightweight generics are sufficient to derive the `Success` type of the result in the code above.
@@ -102,7 +104,7 @@ If the shared `Result` can't be converted to a `Swift.Result` the failure is [no
 
 As the `Success` type will be a class, and the `Failure` type is a `KotlinThrowable`, further transformations are needed, but these can be done using standard Swift.Result functions like `map` and `mapError`.
 
-Using generic extensions on a shared generic Objective-C type is limited and you have to be explicit with the type (and essentially making the extension not generic), but it still might be useful:
+The use of generic extensions on a shared generic Objective-C type is limited and you have to be explicit with the type (and essentially making the extension not generic), but it still might be useful:
 
 ```
 extension Result where T == NSString { ... }
