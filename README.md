@@ -11,7 +11,7 @@ This test of KMM is not even scratching the surface at this point and consist on
 ### Summary
 
 - It's Kotlin to Objective-C, not Kotlin to Swift (no structs or enums).
-- An additional mapping layer between the shared Objective-C framework and idiomatic Swift is needed.
+- An additional mapping layer between the shared Objective-C framework and idiomatic Swift is needed. **The additional amount of work enforced by this will be crucial to the success of KMM.**
 - A lot of information is lost when exposing a shared `sealed class` to iOS, but manually transforming it to Swift seems feasible.
 - Since the shared framework is written in Kotlin, KMM should't have a negative impact on Android development.
 - Android and iOS developers unified by working together on shared framework seems advantageous.
@@ -29,9 +29,7 @@ Random comments:
 - Xcode project deployment target is set to iOS 13.2 using SceneDelegate and SwiftUI.
 - Both Android and iOS projects runs fine in simulator.
 
-## Experiments
-
-### A Shared Result type
+## A Shared Result type
 
 Swift has [enum](https://docs.swift.org/swift-book/LanguageGuide/Enumerations.html) which is a [sum type](https://en.wikipedia.org/wiki/Tagged_union) to represent one value out of a number of possible values.
 
@@ -44,7 +42,7 @@ public enum Result<Success, Failure: Error> {
 }
 ```
 
-Kotlin has a [Result](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/#result) type also, but it's [limited](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md#limitations) and can't be used as a return type. As an alternative, a shared result type can be constructed using Kotlin's [sealed classes](https://kotlinlang.org/docs/reference/sealed-classes.html):
+Kotlin has a [Result](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-result/#result) type also, but it's [limited](https://github.com/Kotlin/KEEP/blob/master/proposals/stdlib/result.md#limitations) and can't be used as a return type. As an alternative, a shared result type can be constructed using Kotlin's [sealed classes](https://kotlinlang.org/docs/reference/sealed-classes.html) (which can be used to mimic Swift enums):
 
 ```
 sealed class Result<T> {
@@ -75,7 +73,7 @@ Kotlin generics are translated to the less powerful Objective-C [lightweight](ht
 
 Also, the [Nothing](https://kotlinlang.org/api/latest/jvm/stdlib/kotlin/-nothing.html) type above, which represents something that can't be instantiated (like Swift's [Never](https://developer.apple.com/documentation/swift/never)), is lost in the translation from Kotlin to Objective-C, and is an another example of something that needs to be taken care of in the "swiftify" layer.
 
-The amount of work involved in keeping this mapping layer up to date with changes in the shared framework will be crucial for the success of KMM.
+**The amount of work involved in keeping this mapping layer up to date with changes in the shared framework will be crucial for the success of KMM.**
 
 To transform the shared `Result<T>` class to `Swift.Result<T, KotlinThrowable>` this extension can be used:
 
@@ -111,6 +109,8 @@ extension Result where T == NSString { ... }
 ```
 
 The Swift code for this can be found in [ContentView.swift](iosApp/iosApp/ContentView.swift) and the Kotlin one in [Result.kt](shared/src/commonMain/kotlin/com/example/kmmexperiment/shared/Result.kt).
+
+### Conclusion
 
 Using `sealed class` in the Kotlin business layer, exposing them as Objective-C generics and manually mapping them to Swift seems doable.
 
